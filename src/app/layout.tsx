@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   description: 'Automate Your Work With Fuzzie.',
 }
 
+export const config = {
+  runtime: "nodejs",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
