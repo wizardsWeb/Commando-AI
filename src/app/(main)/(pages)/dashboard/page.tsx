@@ -11,8 +11,8 @@ const data = [
   { month: "Feb", users: 300 },
   { month: "Mar", users: 800 },
   { month: "Apr", users: 700 },
-  { month: "May", users: 1400 },
-  { month: "Jun", users: 1800 },
+  { month: "May", users: 750 },
+  { month: "Jun", users: 1000 },
 ]
 
 const meetings = [

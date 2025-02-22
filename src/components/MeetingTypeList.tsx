@@ -72,7 +72,7 @@ const MeetingTypeList = () => {
       <div className="flex flex-wrap gap-4">
         <Button
           size="lg"
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+          className="flex items-center gap-2 bg-white hover:bg-gray-50"
           onClick={() => setMeetingState("isInstantMeeting")}
         >
           <Video className="h-5 w-5" />
@@ -87,7 +87,7 @@ const MeetingTypeList = () => {
           />
           <Button
             variant="ghost"
-            className="text-blue-500 hover:bg-blue-500/10 hover:text-blue-400"
+            className="text-white hover:bg-gray-50 "
             onClick={() => setMeetingState("isJoiningMeeting")}
           >
             Join
@@ -186,7 +186,7 @@ const MeetingTypeList = () => {
       >
         <Input
           placeholder="Enter meeting link"
-          className="border-gray-800 bg-[#1a1a1a] focus-visible:ring-blue-500"
+          className="border-gray-800 bg-[#1a1a1a] focus-visible:ring-gray-200"
           onChange={(e) => setValues({ ...values, link: e.target.value })}
         />
       </MeetingModal>

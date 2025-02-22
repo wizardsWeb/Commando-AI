@@ -126,7 +126,7 @@ export default function MeetingChat() {
               <Button
                 variant="default"
                 size="lg"
-                className="rounded-full px-6 py-6 shadow-lg hover:shadow-xl transition-all duration-200 bg-primary"
+                className="rounded-full px-6 py-6 shadow-lg hover:shadow-xl transition-all duration-200 bg-white"
                 onClick={() => setIsOpen(true)}
               >
                 <MessageCircle className="h-6 w-6 mr-2" />
@@ -274,7 +274,7 @@ export default function MeetingChat() {
                             disabled={isLoading}
                             className={cn(
                               "h-12 w-12 rounded-full transition-all duration-200",
-                              input.trim() ? "bg-primary hover:bg-primary/90 scale-100" : "bg-muted scale-95",
+                              input.trim() ? "bg-primary hover:bg-primary/40 scale-100" : "bg-muted scale-95",
                             )}
                           >
                             <SendHorizontal className="h-5 w-5" />
