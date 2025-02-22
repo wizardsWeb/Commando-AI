@@ -2,10 +2,22 @@ export class AudioProcessor {
     private audioChunks: Blob[] = []
     private mediaRecorder: MediaRecorder | null = null
     private recordingInterval: NodeJS.Timeout | null = null
+    private onTranscription: ((text: string) => void) | null = null
+  
+    setTranscriptionHandler(handler: (text: string) => void) {
+      this.onTranscription = handler
+    }
   
     async startRecording() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+        })
+  
         this.mediaRecorder = new MediaRecorder(stream)
   
         this.mediaRecorder.ondataavailable = (event) => {
@@ -16,13 +28,13 @@ export class AudioProcessor {
   
         this.mediaRecorder.start()
   
-        // Process audio chunks every 10 seconds
+        // Process audio chunks every 3 seconds
         this.recordingInterval = setInterval(() => {
           if (this.mediaRecorder?.state === "recording") {
             this.mediaRecorder.requestData()
             this.processAudioChunk()
           }
-        }, 10000)
+        }, 3000)
       } catch (error) {
         console.error("Error starting audio recording:", error)
       }
@@ -36,6 +48,7 @@ export class AudioProcessor {
       if (this.recordingInterval) {
         clearInterval(this.recordingInterval)
       }
+      this.audioChunks = []
     }
   
     private async processAudioChunk() {
@@ -48,19 +61,28 @@ export class AudioProcessor {
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
         const wavBlob = this.bufferToWave(audioBuffer)
   
-        // Send to backend for processing
+        // Clear chunks for next recording segment
+        this.audioChunks = []
+  
         const formData = new FormData()
         formData.append("audio", wavBlob, `audio_${Date.now()}.wav`)
+        formData.append("language", "en")
   
-        const response = await fetch("https://localhost3000/api/transcribe", {
+        const response = await fetch("/api/transcribe", {
           method: "POST",
           body: formData,
         })
   
-        if (!response.ok) throw new Error("Failed to transcribe audio")
+        if (!response.ok) {
+          throw new Error("Failed to transcribe audio")
+        }
   
-        // Clear processed chunks
-        this.audioChunks = []
+        const { transcript } = await response.json()
+  
+        if (transcript && transcript.trim() && this.onTranscription) {
+          console.log("Transcription received:", transcript.trim())
+          this.onTranscription(transcript.trim())
+        }
       } catch (error) {
         console.error("Error processing audio chunk:", error)
       }
@@ -73,6 +95,7 @@ export class AudioProcessor {
       const view = new DataView(buffer)
       const channels: Float32Array[] = []
   
+      // Collect channel data
       for (let i = 0; i < numOfChannels; i++) {
         channels.push(abuffer.getChannelData(i))
       }

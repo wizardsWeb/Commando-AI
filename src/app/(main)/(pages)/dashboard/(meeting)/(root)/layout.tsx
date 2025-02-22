@@ -6,6 +6,7 @@ import type { Metadata } from "next"
 import "@stream-io/video-react-sdk/dist/css/styles.css"
 import { Urbanist } from "next/font/google"
 import { cn } from "@/lib/utils"
+import { TranscriptionProvider } from '@/providers/transcript-provider';
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -22,7 +23,9 @@ export const metadata: Metadata = {
 const layout = ({ children }: { children: ReactNode }) => {
   return (
     <main className={cn("font-sans", urbanist.variable)}>
+      <TranscriptionProvider>
       <StreamVideoProvider>{children}</StreamVideoProvider>
+      </TranscriptionProvider>
     </main>
   )
 }

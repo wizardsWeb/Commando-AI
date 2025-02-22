@@ -1,44 +1,55 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
+import { Configuration, OpenAIApi } from "openai"
+import fs from "fs"
+import path from "path"
 
-export async function POST(req: Request) {
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+const openai = new OpenAIApi(configuration)
+
+export async function POST(req: NextRequest) {
+  if (!configuration.apiKey) {
+    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 })
+  }
+
   try {
     const formData = await req.formData()
     const audioFile = formData.get("audio") as Blob
+    const meetingId = formData.get("meetingId") as string
 
     if (!audioFile) {
       return NextResponse.json({ error: "No audio file provided" }, { status: 400 })
     }
 
-    // Convert blob to base64
-    const buffer = Buffer.from(await audioFile.arrayBuffer())
-    const base64Audio = buffer.toString("base64")
-
-    const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        file: base64Audio,
-        model: "whisper-1",
-        response_format: "text",
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error("Failed to transcribe audio")
+    if (!meetingId) {
+      return NextResponse.json({ error: "No meeting ID provided" }, { status: 400 })
     }
 
-    const transcript = await response.text()
+    const buffer = Buffer.from(await audioFile.arrayBuffer())
 
-    // Store transcript in vector database here
-    // This is where you'd implement your embedding storage
+    const response = await openai.createTranscription(buffer as any, "whisper-1", undefined, "text")
 
-    return NextResponse.json({ transcript })
-  } catch (error) {
-    console.error("Error:", error)
-    return NextResponse.json({ error: "Failed to process audio" }, { status: 500 })
+    const transcription = response.data as string
+
+    // Save transcription to a file
+    const transcriptionsDir = path.join(process.cwd(), "transcriptions")
+    if (!fs.existsSync(transcriptionsDir)) {
+      fs.mkdirSync(transcriptionsDir)
+    }
+
+    const filePath = path.join(transcriptionsDir, `${meetingId}.txt`)
+    fs.appendFileSync(filePath, transcription + " ")
+
+    return NextResponse.json({ transcription })
+  } catch (error: any) {
+    if (error.response) {
+      console.error(error.response.status, error.response.data)
+      return NextResponse.json({ error: error.response.data }, { status: error.response.status })
+    } else {
+      console.error(`Error with OpenAI API request: ${error.message}`)
+      return NextResponse.json({ error: "An error occurred during your request." }, { status: 500 })
+    }
   }
 }
 
