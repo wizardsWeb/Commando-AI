@@ -1,5 +1,7 @@
 'use client';
-import { useState } from 'react';
+import MeetingChat from "@/components/MeetingChat"
+import { AudioProcessor } from "@/lib/audio-processor"
+import { useEffect, useRef,useState } from "react"
 import {
   CallControls,
   CallParticipantsList,
@@ -32,6 +34,13 @@ const MeetingRoom = () => {
   const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
   const [showParticipants, setShowParticipants] = useState(false);
   const { useCallCallingState } = useCallStateHooks();
+  const audioProcessor = new AudioProcessor()
+  const audioProcessorRef = useRef(audioProcessor)
+
+  useEffect(() => {
+    audioProcessorRef.current.startRecording()
+    return () => audioProcessorRef.current.stopRecording()
+  }, [])
 
   // for more detail about types of CallingState see: https://getstream.io/video/docs/react/ui-cookbook/ringing-call/#incoming-call-panel
   const callingState = useCallCallingState();
@@ -52,17 +61,18 @@ const MeetingRoom = () => {
   return (
     <section className="relative h-screen w-full overflow-hidden pt-4 text-white">
       <div className="relative flex size-full items-center justify-center">
-        <div className=" flex size-full max-w-[1000px] items-center">
-          <CallLayout />
-        </div>
-        <div
-          className={cn('h-[calc(100vh-86px)] hidden ml-2', {
-            'show-block': showParticipants,
-          })}
-        >
-          <CallParticipantsList onClose={() => setShowParticipants(false)} />
-        </div>
+      
+      <div className=" flex size-full max-w-[1000px] items-center">
+        <CallLayout />
       </div>
+      <div
+        className={cn('h-[calc(100vh-86px)] hidden ml-2', {
+          'show-block': showParticipants,
+        })}
+      >
+        <CallParticipantsList onClose={() => setShowParticipants(false)} />
+      </div>
+    </div>
       {/* video layout and call controls */}
       <div className="fixed bottom-0 flex w-full items-center justify-center gap-5">
         <CallControls onLeave={() => router.push(`/`)} />
@@ -94,8 +104,15 @@ const MeetingRoom = () => {
             <Users size={20} className="text-white" />
           </div>
         </button>
+        {!isPersonalRoom && <MeetingChat />}
         {!isPersonalRoom && <EndCallButton />}
+
+    
+        
       </div>
+      
+      
+
     </section>
   );
 };
