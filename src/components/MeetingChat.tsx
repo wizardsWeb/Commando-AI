@@ -1,16 +1,15 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { MessageCircle, SendHorizontal, X, MinimizeIcon, MaximizeIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Card } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { useTranscription } from "@/providers/transcript-provider"
 
 interface Message {
   id: string
@@ -26,13 +25,12 @@ export default function MeetingChat() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const { state: transcriptionState } = useTranscription()
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,8 +54,8 @@ export default function MeetingChat() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
-          meetingTranscript: transcriptionState.fullText,
+          query: input,
+          meetingId: "default-meeting",
         }),
       })
 
@@ -70,7 +68,7 @@ export default function MeetingChat() {
         {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: data.content,
+          content: data.answer,
           timestamp: Date.now(),
         },
       ])
@@ -82,7 +80,7 @@ export default function MeetingChat() {
   }
 
   return (
-    <div className="fixed bottom-20 right-4 z-50">
+    <div className="fixed bottom-3 right-4 z-50">
       <AnimatePresence mode="wait">
         {!isOpen ? (
           <motion.div
@@ -92,12 +90,12 @@ export default function MeetingChat() {
             transition={{ duration: 0.2 }}
           >
             <Button
-              variant="ghost"
+              variant="secondary"
               size="icon"
-              className="bg-zinc-900/90 hover:bg-zinc-800 text-white rounded-full p-2 shadow-lg"
+              className="rounded-full p-3 pl-4 shadow-lg hover:shadow-xl transition-all duration-200"
               onClick={() => setIsOpen(true)}
             >
-              <MessageCircle className="h-5 w-5" />
+              <MessageCircle className="h-7 w-7" />
             </Button>
           </motion.div>
         ) : (
@@ -106,106 +104,102 @@ export default function MeetingChat() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="w-[380px] rounded-lg overflow-hidden shadow-2xl border border-zinc-800 bg-zinc-900/95 backdrop-blur-sm"
           >
-            {/* Chat Header */}
-            <div className="flex items-center justify-between p-3 bg-zinc-900 border-b border-zinc-800">
-              <h2 className="font-semibold text-white flex items-center gap-2 text-sm">
-                <MessageCircle className="w-4 h-4" />
-                Meeting Chat
-              </h2>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 hover:bg-zinc-800"
-                  onClick={() => setIsMinimized(!isMinimized)}
-                >
-                  {isMinimized ? (
-                    <MaximizeIcon className="h-4 w-4 text-zinc-400" />
-                  ) : (
-                    <MinimizeIcon className="h-4 w-4 text-zinc-400" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 hover:bg-zinc-800"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <X className="h-4 w-4 text-zinc-400" />
-                </Button>
+            <Card className="w-[380px] overflow-hidden shadow-2xl bg-background/95 backdrop-blur-sm border-primary/20">
+              {/* Chat Header */}
+              <div className="flex items-center justify-between p-3 border-b border-primary/10 bg-primary/5">
+                <h2 className="font-medium flex items-center gap-2 text-sm">
+                  <MessageCircle className="w-4 h-4 text-primary" />
+                  <span>Meeting Chat</span>
+                </h2>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 hover:bg-primary/10"
+                    onClick={() => setIsMinimized(!isMinimized)}
+                  >
+                    {isMinimized ? <MaximizeIcon className="h-4 w-4" /> : <MinimizeIcon className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 hover:bg-primary/10"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <AnimatePresence>
-              {!isMinimized && (
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: "auto" }}
-                  exit={{ height: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {/* Chat Messages */}
-                  <ScrollArea className="h-[400px] p-3">
-                    <div className="space-y-4">
-                      {messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={cn(
-                            "flex gap-2 text-sm",
-                            message.role === "assistant" ? "flex-row" : "flex-row-reverse",
-                          )}
-                        >
-                          <Avatar className="w-6 h-6 border border-zinc-800 bg-zinc-900">
-                            <AvatarFallback className="text-xs bg-zinc-800 text-zinc-400">
-                              {message.role === "assistant" ? "AI" : "ME"}
-                            </AvatarFallback>
-                          </Avatar>
+              <AnimatePresence>
+                {!isMinimized && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: "auto" }}
+                    exit={{ height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {/* Chat Messages */}
+                    <ScrollArea className="h-[400px] p-4">
+                      <div className="space-y-4">
+                        {messages.map((message) => (
                           <div
+                            key={message.id}
                             className={cn(
-                              "rounded-lg px-3 py-2 max-w-[75%] text-sm",
-                              message.role === "assistant" ? "bg-zinc-800/50 text-white" : "bg-purple-600 text-white",
+                              "flex gap-2 text-sm",
+                              message.role === "assistant" ? "flex-row" : "flex-row-reverse",
                             )}
                           >
-                            {message.content}
+                            <Avatar className="h-8 w-8 border shadow-sm">
+                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                {message.role === "assistant" ? "AI" : "ME"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div
+                              className={cn(
+                                "rounded-2xl px-4 py-2 max-w-[75%] text-sm leading-relaxed shadow-sm",
+                                message.role === "assistant"
+                                  ? "bg-muted text-muted-foreground"
+                                  : "bg-primary text-primary-foreground",
+                              )}
+                            >
+                              {message.content}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                      {isLoading && (
-                        <div className="flex gap-2">
-                          <Avatar className="w-6 h-6 border border-zinc-800 bg-zinc-900">
-                            <AvatarFallback className="text-xs bg-zinc-800 text-zinc-400">AI</AvatarFallback>
-                          </Avatar>
-                          <div className="bg-zinc-800/50 text-white rounded-lg px-3 py-2 text-sm">Thinking...</div>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
+                        ))}
+                        {isLoading && (
+                          <div className="flex gap-2">
+                            <Avatar className="h-8 w-8 border shadow-sm">
+                              <AvatarFallback className="text-xs bg-primary/10 text-primary">AI</AvatarFallback>
+                            </Avatar>
+                            <div className="bg-muted text-muted-foreground rounded-2xl px-4 py-2 text-sm animate-pulse">
+                              Thinking...
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
 
-                  {/* Chat Input */}
-                  <form onSubmit={handleSubmit} className="p-3 border-t border-zinc-800">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Ask about the meeting..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        disabled={isLoading}
-                        className="flex-1 h-9 bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-400 text-sm"
-                      />
-                      <Button
-                        type="submit"
-                        size="icon"
-                        className="h-9 w-9 bg-purple-600 hover:bg-purple-700 text-white"
-                        disabled={isLoading}
-                      >
-                        <SendHorizontal className="h-4 w-4" />
-                      </Button>
+                    {/* Chat Input */}
+                    <div className="p-4 border-t border-primary/10">
+                      <form onSubmit={handleSubmit} className="flex gap-2">
+                        <Input
+                          placeholder="Ask about the meeting..."
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          disabled={isLoading}
+                          className="flex-1 bg-muted/50"
+                        />
+                        <Button type="submit" size="icon" disabled={isLoading} className="h-10 w-10 rounded-full">
+                          <SendHorizontal className="h-4 w-4" />
+                        </Button>
+                      </form>
                     </div>
-                  </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
           </motion.div>
         )}
       </AnimatePresence>

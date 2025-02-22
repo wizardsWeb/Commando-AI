@@ -15,8 +15,8 @@ const urbanist = Urbanist({
 })
 
 export const metadata: Metadata = {
-  title: "EdifyAI",
-  description: "EdifyAI",
+  title: "Commando AI",
+  description: "Commando AI",
   icons: ["/icons/logo.png"],
 }
 

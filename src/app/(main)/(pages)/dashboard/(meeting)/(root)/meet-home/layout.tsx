@@ -5,8 +5,8 @@ import InfoBar from '@/components/infobar';
 import Sidebar from '@/components/sidebar/index';
 
 export const metadata: Metadata = {
-  title: 'YOOM',
-  description: 'A workspace for your team, powered by Stream Chat and Clerk.',
+  title: 'Commando AI',
+  description: 'Commando AI',
 };
 
 const RootLayout = ({ children }: Readonly<{children: ReactNode}>) => {

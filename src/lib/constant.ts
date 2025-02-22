@@ -6,6 +6,7 @@ import Payment from '@/components/icons/payment'
 import Settings from '@/components/icons/settings'
 import Workflows from '@/components/icons/workflows'
 import { Connection } from './types'
+import { LucideMousePointerClick } from 'lucide-react'
 
 export const clients = [...new Array(10)].map((client, index) => ({
   href: `/${index + 1}.png`,
@@ -98,8 +99,8 @@ export const menuOptions = [
   { name: 'Settings', Component: Settings, href: '/settings' },
   { name: 'Connections', Component: Category, href: '/connections' },
   { name: 'Billing', Component: Payment, href: '/billing' },
-  { name: 'Templates', Component: Templates, href: '/templates' },
   { name: 'Logs', Component: Logs, href: '/logs' },
+  {name:"Meet",Component:LucideMousePointerClick,href:"/dashboard/meet-home"},
 ]
 
 export const EditorCanvasDefaultCardTypes = {
