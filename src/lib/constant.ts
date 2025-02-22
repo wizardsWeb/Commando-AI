@@ -99,7 +99,6 @@ export const menuOptions = [
   { name: 'Settings', Component: Settings, href: '/settings' },
   { name: 'Connections', Component: Category, href: '/connections' },
   { name: 'Billing', Component: Payment, href: '/billing' },
-  { name: 'Logs', Component: Logs, href: '/logs' },
   {name:"Meet",Component:LucideMousePointerClick,href:"/dashboard/meet-home"},
 ]
 
