@@ -1,11 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
 import OpenAI from "openai"
-import fs from "fs"
+import { writeFile, mkdir, unlink, appendFile, existsSync } from "fs/promises"
 import path from "path"
+
+// Set runtime to nodejs since we need file system access
+export const runtime = "nodejs"
+
+
+// Increase payload size limit
+export const maxDuration = 300 // 5 minutes timeout
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "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",
+  apiKey: process.env.OPENAI_API_KEY,
 })
 
 export async function POST(req: NextRequest) {
@@ -34,47 +41,44 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await audioFile.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Create a temporary file
+    // Create temporary directories if they don't exist
     const tmpDir = path.join(process.cwd(), "tmp")
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir, { recursive: true })
-    }
+    const transcriptionsDir = path.join(process.cwd(), "transcriptions")
 
+    await mkdir(tmpDir, { recursive: true })
+    await mkdir(transcriptionsDir, { recursive: true })
+
+    // Create temporary file
     const tempFilePath = path.join(tmpDir, `temp_${Date.now()}.webm`)
-    fs.writeFileSync(tempFilePath, buffer)
+    await writeFile(tempFilePath, buffer)
 
     try {
       console.log("Sending audio file to OpenAI for transcription...")
-      const response = await openai.audio.transcriptions.create({
-        file: fs.createReadStream(tempFilePath),
+      const transcription = await openai.audio.transcriptions.create({
+        file: await import("fs").then((fs) => fs.createReadStream(tempFilePath)),
         model: "whisper-1",
         response_format: "text",
         language: "en",
       })
 
       // Clean up temp file
-      fs.unlinkSync(tempFilePath)
+      await unlink(tempFilePath)
 
-      if (!response) {
+      if (!transcription) {
         throw new Error("No transcription received from OpenAI")
       }
 
-      console.log("Transcription received:", response)
+      console.log("Transcription received:", transcription)
 
       // Save transcription to a file
-      const transcriptionsDir = path.join(process.cwd(), "transcriptions")
-      if (!fs.existsSync(transcriptionsDir)) {
-        fs.mkdirSync(transcriptionsDir, { recursive: true })
-      }
-
       const filePath = path.join(transcriptionsDir, `${meetingId}.txt`)
-      fs.appendFileSync(filePath, response + " ")
+      await appendFile(filePath, transcription + " ")
 
-      return NextResponse.json({ transcription: response })
+      return NextResponse.json({ transcription })
     } finally {
       // Ensure temp file is deleted even if transcription fails
-      if (fs.existsSync(tempFilePath)) {
-        fs.unlinkSync(tempFilePath)
+      if (existsSync(tempFilePath)) {
+        await unlink(tempFilePath)
       }
     }
   } catch (error: any) {
@@ -101,13 +105,5 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     )
   }
-}
-
-// Increase payload size limit for audio files
-export const config = {
-  api: {
-    bodyParser: false,
-    responseLimit: false,
-  },
 }
 
