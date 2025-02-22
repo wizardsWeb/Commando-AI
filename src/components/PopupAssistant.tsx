@@ -1,13 +1,15 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useChat } from "ai/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Mic, MicOff, Send, Copy, Minimize2, MessageCircle, Volume2, VolumeX } from "lucide-react"
 
 export function PopupAssistant() {
-  const { messages, input, handleInputChange, handleSubmit, setInput, setMessages } = useChat({ api: "/api/chat" })
+  const [messages, setMessages] = useState<Array<{ id: string; role: "user" | "assistant"; content: string }>>([])
+  const [input, setInput] = useState("")
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [isSpeechRecognitionSupported, setIsSpeechRecognitionSupported] = useState(false)
@@ -26,10 +28,12 @@ export function PopupAssistant() {
         setIsSpeechRecognitionSupported(true)
         recognitionRef.current = new SpeechRecognition()
         recognitionRef.current.continuous = true
-        recognitionRef.current.interimResults = false
+        recognitionRef.current.interimResults = true
 
         recognitionRef.current.onresult = (event: any) => {
-          const finalTranscript = event.results[event.results.length - 1][0].transcript
+          const finalTranscript = Array.from(event.results)
+            .map((result: any) => result[0].transcript)
+            .join(" ")
           setTranscript(finalTranscript)
           setInput(finalTranscript)
         }
@@ -40,7 +44,7 @@ export function PopupAssistant() {
         utteranceRef.current = new SpeechSynthesisUtterance()
       }
     }
-  }, [setInput])
+  }, [])
 
   const startListening = () => {
     if (recognitionRef.current) {
@@ -66,7 +70,7 @@ export function PopupAssistant() {
         synthRef.current.speak(utteranceRef.current)
       }
     },
-    [isMuted]
+    [isMuted],
   )
 
   const toggleMute = () => {
@@ -84,18 +88,20 @@ export function PopupAssistant() {
         const userMessage = { id: Date.now().toString(), role: "user" as const, content: input }
         setMessages((prev) => [...prev, userMessage]) // Add user message to UI
 
-        const response = await fetch("/api/assistant", {
+        const response = await fetch("https://virushacks.app.n8n.cloud/webhook/aichat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: [...messages, userMessage] }),
+          body: JSON.stringify({
+            query: input, // Send only the query
+          }),
         })
 
         if (response.ok) {
           const data = await response.json()
-          const assistantMessage = { id: Date.now().toString(), role: "assistant" as const, content: data.content }
+          const assistantMessage = { id: Date.now().toString(), role: "assistant" as const, content: data.output }
 
           setMessages((prev) => [...prev, assistantMessage]) // Add assistant message to UI
-          speakText(data.content) // Speak the response
+          speakText(data.output) // Speak the response
         } else {
           console.error("Error fetching response:", await response.text())
         }
@@ -122,9 +128,14 @@ export function PopupAssistant() {
   }
 
   return (
-    <div className={`fixed bottom-4 right-4 transition-all duration-300 ease-in-out ${isExpanded ? "w-[50vh] h-[80vh]" : "w-16 h-16"}`}>
+    <div
+      className={`fixed bottom-4 right-4 transition-all duration-300 ease-in-out ${isExpanded ? "w-[50vh] h-[80vh]" : "w-16 h-16"}`}
+    >
       {!isExpanded && (
-        <Button className="w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setIsExpanded(true)}>
+        <Button
+          className="w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={() => setIsExpanded(true)}
+        >
           <MessageCircle className="h-8 w-8" />
         </Button>
       )}
@@ -139,7 +150,9 @@ export function PopupAssistant() {
           <div className="flex-grow overflow-y-auto p-4 space-y-4">
             {messages.map((m) => (
               <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] p-2 rounded-lg text-sm ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
+                <div
+                  className={`max-w-[80%] p-2 rounded-lg text-sm ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                >
                   {m.content}
                   <Button size="icon" variant="ghost" className="h-4 w-4 ml-1" onClick={() => handleCopy(m.content)}>
                     <Copy className="h-3 w-3" />
@@ -155,13 +168,33 @@ export function PopupAssistant() {
               </div>
             )}
           </div>
-          {isSpeaking && <div className="text-center text-sm text-muted-foreground animate-pulse">Assistant is speaking...</div>}
+          {isSpeaking && (
+            <div className="text-center text-sm text-muted-foreground animate-pulse">Assistant is speaking...</div>
+          )}
           <div className="p-4 border-t">
             <form onSubmit={handleSendMessage} className="flex space-x-2">
-              <Input value={input} onChange={handleInputChange} placeholder="Type your message..." className="flex-grow text-sm" />
-              <Button type="submit" size="icon" className="h-10 w-12"><Send className="h-4 w-4" /></Button>
-              {isSpeechRecognitionSupported && <Button className="h-10 w-12" type="button" size="icon" onClick={isListening ? stopListening : startListening}>{isListening ? <MicOff /> : <Mic />}</Button>}
-              <Button type="button" size="icon" className="h-10 w-12" onClick={toggleMute}>{isMuted ? <VolumeX /> : <Volume2 />}</Button>
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-grow text-sm"
+              />
+              <Button type="submit" size="icon" className="h-10 w-12">
+                <Send className="h-4 w-4" />
+              </Button>
+              {isSpeechRecognitionSupported && (
+                <Button
+                  className="h-10 w-12"
+                  type="button"
+                  size="icon"
+                  onClick={isListening ? stopListening : startListening}
+                >
+                  {isListening ? <MicOff /> : <Mic />}
+                </Button>
+              )}
+              <Button type="button" size="icon" className="h-10 w-12" onClick={toggleMute}>
+                {isMuted ? <VolumeX /> : <Volume2 />}
+              </Button>
             </form>
           </div>
         </div>
@@ -169,3 +202,4 @@ export function PopupAssistant() {
     </div>
   )
 }
+
