@@ -122,7 +122,7 @@ export function PopupAssistant() {
   }
 
   return (
-    <div className={`fixed bottom-4 right-4 transition-all duration-300 ease-in-out ${isExpanded ? "w-96 h-[80vh]" : "w-16 h-16"}`}>
+    <div className={`fixed bottom-4 right-4 transition-all duration-300 ease-in-out ${isExpanded ? "w-[50vh] h-[80vh]" : "w-16 h-16"}`}>
       {!isExpanded && (
         <Button className="w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setIsExpanded(true)}>
           <MessageCircle className="h-8 w-8" />
@@ -159,9 +159,9 @@ export function PopupAssistant() {
           <div className="p-4 border-t">
             <form onSubmit={handleSendMessage} className="flex space-x-2">
               <Input value={input} onChange={handleInputChange} placeholder="Type your message..." className="flex-grow text-sm" />
-              <Button type="submit" size="icon"><Send className="h-4 w-4" /></Button>
-              {isSpeechRecognitionSupported && <Button type="button" size="icon" onClick={isListening ? stopListening : startListening}>{isListening ? <MicOff /> : <Mic />}</Button>}
-              <Button type="button" size="icon" onClick={toggleMute}>{isMuted ? <VolumeX /> : <Volume2 />}</Button>
+              <Button type="submit" size="icon" className="h-10 w-12"><Send className="h-4 w-4" /></Button>
+              {isSpeechRecognitionSupported && <Button className="h-10 w-12" type="button" size="icon" onClick={isListening ? stopListening : startListening}>{isListening ? <MicOff /> : <Mic />}</Button>}
+              <Button type="button" size="icon" className="h-10 w-12" onClick={toggleMute}>{isMuted ? <VolumeX /> : <Volume2 />}</Button>
             </form>
           </div>
         </div>

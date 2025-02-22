@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query: audioTranscript }),
+        body: JSON.stringify({ query: audioTranscript  }),
       })
 
       console.log("Webhook response status:", webhookResponse.status)
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       console.log("Sending request to OpenAI:", messages)
 
 
-      response = "I am sorry , but i am not able to understand the audio" // Get the text response from OpenAI
+      response = "I am sorry , but i am not able to understand" // Get the text response from OpenAI
     }
 
     // Return the response in the expected chat format
