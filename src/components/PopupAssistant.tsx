@@ -84,7 +84,7 @@ export function PopupAssistant() {
         const userMessage = { id: Date.now().toString(), role: "user" as const, content: input }
         setMessages((prev) => [...prev, userMessage]) // Add user message to UI
 
-        const response = await fetch("/api/chat", {
+        const response = await fetch("/api/assistant", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: [...messages, userMessage] }),

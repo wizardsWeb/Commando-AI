@@ -1,52 +1,36 @@
-import { openai } from "@ai-sdk/openai"
-import { streamText } from "ai"
+import { OpenAIStream, StreamingTextResponse } from "ai"
+import { Configuration, OpenAIApi } from "openai-edge"
 
-export const runtime = "edge"
+const config = new Configuration({
+  apiKey: process.env.NEXT_OPENAI_API_KEY,
+})
+const openai = new OpenAIApi(config)
 
 export async function POST(req: Request) {
-  try {
-    const { messages, audioTranscript } = await req.json()
-    let response
+  const { messages } = await req.json()
 
-    if (audioTranscript) {
-    //   console.log("Sending request to webhook:", { query: audioTranscript })
-
-      // Send the transcribed text to the webhook
-      const webhookResponse = await fetch("https://virushacks.app.n8n.cloud/webhook-test/aichat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: audioTranscript }),
-      })
-
-      console.log("Webhook response status:", webhookResponse.status)
-
-      if (webhookResponse.ok) {
-        const data = await webhookResponse.json()
-        console.log("Webhook response data:", data)
-        response = data.output
-      } else {
-        console.error("Webhook error:", await webhookResponse.text())
-        response = "Sorry, there was an error processing your request."
-      }
-    } else {
-      // Use OpenAI for regular chat messages
-      console.log("Sending request to OpenAI:", messages)
-
-
-      response = "I am sorry , but i am not able to understand the audio" // Get the text response from OpenAI
-    }
-
-    // Return the response in the expected chat format
-    return new Response(JSON.stringify({ role: "assistant", content: response }), {
-      headers: { "Content-Type": "application/json" },
-    })
-  } catch (error) {
-    console.error("API route error:", error)
-    return new Response(JSON.stringify({ error: "An error occurred" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    })
+  // Here you would:
+  // 1. Get relevant meeting transcripts from your vector DB
+  // 2. Add them to the system prompt
+  const systemPrompt = {
+    role: "system",
+    content: `You are an AI meeting assistant that helps users understand and recall information from their meetings. 
+    You have access to meeting transcripts and can answer questions about the discussion.
+    Always be concise and accurate in your responses.
+    If you're not sure about something, admit it and don't make assumptions.
+    
+    Meeting Context:
+    [Insert relevant meeting transcripts here]`,
   }
+
+  const response = await openai.createChatCompletion({
+    model: "gpt-4",
+    messages: [systemPrompt, ...messages],
+    temperature: 0.7,
+    stream: true,
+  })
+
+  const stream = OpenAIStream(response)
+  return new StreamingTextResponse(stream)
 }
+
