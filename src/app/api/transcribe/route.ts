@@ -76,10 +76,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ transcription })
     } finally {
-      // Ensure temp file is deleted even if transcription fails
-      if (existsSync(tempFilePath)) {
-        await unlink(tempFilePath)
-      }
+   
     }
   } catch (error: any) {
     console.error("Error in transcription route:", error)

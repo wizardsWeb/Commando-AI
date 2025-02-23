@@ -1,18 +1,30 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { authMiddleware } from "@clerk/nextjs";
+import { NextResponse } from "next/server";
 
-const protectedRoute = createRouteMatcher([
-  '/',
-  '/upcoming',
-  '/meeting(.*)',
-  '/previous',
-  '/recordings',
-  '/personal-room',
-]);
+export default authMiddleware({
+  // Routes that can be accessed while signed out
+  publicRoutes: [
+    "/sign-in*",
+    "/sign-up*",
+    "/api/webhooks/clerk",
+    "/api/webhooks/stripe",
+  ],
+  
+  // Routes that can always be accessed, and have
+  // no authentication information
+  ignoredRoutes: [
+    "/api/webhooks/clerk",
+    "/api/webhooks/stripe"
+  ],
 
-export default clerkMiddleware((auth, req) => {
-  if (protectedRoute(req)) auth().protect();
+  afterAuth(auth, req) {
+    // Handle users who aren't authenticated
+    if (!auth.userId && !auth.isPublicRoute) {
+      return NextResponse.redirect(new URL('/sign-in', req.url));
+    }
+  }
 });
 
 export const config = {
-  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 };
