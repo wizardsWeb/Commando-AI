@@ -14,7 +14,6 @@ export const metadata: Metadata = {
   description: 'Automate Your Work With Commando AI.',
 }
 
-export const runtime = "nodejs";
 
 
 export default function RootLayout({
