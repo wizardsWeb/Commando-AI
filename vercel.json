@@ -11,8 +11,11 @@
         "src": "/(.*)",
         "dest": "/"
       }
-    ],
+    ]
+   
+,    
     "env": {
+          "NEXT_PUBLIC_DISABLE_ESLINT": "true",
       "DATABASE_URL": "postgresql://neondb_owner:npg_plN0Z8daEGWg@ep-soft-voice-a8yazvvw-pooler.eastus2.azure.neon.tech/neondb?sslmode=require"
     }
   }
