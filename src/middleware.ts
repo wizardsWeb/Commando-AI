@@ -24,23 +24,36 @@ export default authMiddleware({
   ],
 
   afterAuth(auth, req) {
-    // Allow access to ignored routes without authentication check
+    // Handle requests to ignored routes
     if (auth.isIgnoredRoute) {
       return NextResponse.next();
     }
 
-    // Redirect unauthenticated users if they try to access a protected route
+    // Redirect if not authenticated
     if (!auth.userId && !auth.isPublicRoute) {
-      return NextResponse.redirect(new URL("/sign-in", req.url));
+      const signInUrl = new URL('/sign-in', req.url);
+      // Preserve the current URL as a redirect after sign-in
+      signInUrl.searchParams.set('redirect_url', req.url);
+      return NextResponse.redirect(signInUrl);
     }
 
     return NextResponse.next();
   },
 });
 
+// Update the matcher pattern to be more specific and comprehensive
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     * - public files with extensions (.svg, .jpg, etc)
+     */
+    "/((?!.+\\.[\\w]+$|_next).*)",
+    "/",
     "/(api|trpc)(.*)",
   ],
 };
