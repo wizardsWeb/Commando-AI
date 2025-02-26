@@ -1,3 +1,4 @@
+import React from 'react'
 import { ConnectionProviderProps } from '@/providers/connections-provider'
 import { EditorCanvasCardType } from './types'
 import { EditorState } from '@/providers/editor-provider'
@@ -91,7 +92,7 @@ export const onConnections = async (
   editorState: EditorState,
   googleFile: any
 ) => {
-  if (editorState.editor.selectedNode.data.title == 'Discord') {
+  if (editorState.editor.selectedNode.data.title === 'Discord') {
     const connection = await getDiscordConnectionUrl()
     if (connection) {
       nodeConnection.setDiscordNode({
@@ -102,7 +103,7 @@ export const onConnections = async (
       })
     }
   }
-  if (editorState.editor.selectedNode.data.title == 'Notion') {
+  if (editorState.editor.selectedNode.data.title === 'Notion') {
     const connection = await getNotionConnection()
     if (connection) {
       nodeConnection.setNotionNode({
@@ -121,10 +122,11 @@ export const onConnections = async (
           nodeConnection.notionNode.databaseId,
           nodeConnection.notionNode.accessToken
         )
+        console.log(response);
       }
     }
   }
-  if (editorState.editor.selectedNode.data.title == 'Slack') {
+  if (editorState.editor.selectedNode.data.title === 'Slack') {
     const connection = await getSlackConnection()
     if (connection) {
       nodeConnection.setSlackNode({

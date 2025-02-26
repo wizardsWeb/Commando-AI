@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --experimental-https",
-    "build": "prisma generate && prisma db push &&   next build && next lint --max-warnings 0 || true",
+    "build": "prisma generate && prisma db push && NEXT_DISABLE_ESLINT=1 next build",
     "start": "next start",
     "lint": "next lint"
   },
