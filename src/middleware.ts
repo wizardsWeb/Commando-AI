@@ -2,11 +2,10 @@ import { authMiddleware } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 
 export default authMiddleware({
-  // Routes that can be accessed while signed out
   publicRoutes: [
     "/",
-    "/sign-in*",
-    "/sign-up*",
+    "/sign-in",
+    "/sign-up",
     "/api/clerk-webhook",
     "/api/drive-activity/notification",
     "/api/payment/success",
@@ -14,7 +13,6 @@ export default authMiddleware({
     "/api/webhooks/stripe",
   ],
 
-  // Routes that can always be accessed, and have no authentication information
   ignoredRoutes: [
     "/api/webhooks/clerk",
     "/api/webhooks/stripe",
@@ -26,13 +24,23 @@ export default authMiddleware({
   ],
 
   afterAuth(auth, req) {
-    // Redirect users who aren't authenticated unless they are accessing a public route
+    // Allow access to ignored routes without authentication check
+    if (auth.isIgnoredRoute) {
+      return NextResponse.next();
+    }
+
+    // Redirect unauthenticated users if they try to access a protected route
     if (!auth.userId && !auth.isPublicRoute) {
       return NextResponse.redirect(new URL("/sign-in", req.url));
     }
+
+    return NextResponse.next();
   },
 });
 
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt).*)",
+    "/(api|trpc)(.*)",
+  ],
 };
