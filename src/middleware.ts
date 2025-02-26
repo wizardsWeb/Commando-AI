@@ -24,8 +24,13 @@ export default authMiddleware({
   ],
 
   afterAuth(auth, req) {
+    // Check if the current route is in ignoredRoutes
+    const isIgnoredRoute = ignoredRoutes.some(route => 
+      req.nextUrl.pathname.startsWith(route)
+    );
+
     // Handle requests to ignored routes
-    if (auth.isIgnoredRoute) {
+    if (isIgnoredRoute) {
       return NextResponse.next();
     }
 
@@ -41,7 +46,6 @@ export default authMiddleware({
   },
 });
 
-// Update the matcher pattern to be more specific and comprehensive
 export const config = {
   matcher: [
     /*
