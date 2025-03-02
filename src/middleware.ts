@@ -1,27 +1,43 @@
-import { authMiddleware } from '@clerk/nextjs'
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 
-export default authMiddleware({
-  publicRoutes: [
-    '/',
-    '/api/clerk-webhook',
-    '/api/drive-activity/notification',
-    '/api/payment/success',
-  ],
-  ignoredRoutes: [
-    '/api/auth/callback/discord',
-    '/api/auth/callback/notion',
-    '/api/auth/callback/slack',
-    '/api/flow',
-    '/api/cron/wait',
-  ],
+// Define public and ignored routes
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in",
+  "/sign-up",
+  "/api/clerk-webhook",
+  "/api/drive-activity/notification",
+  "/api/payment/success",
+])
+
+const isIgnoredRoute = createRouteMatcher([
+  "/api/auth/callback/discord",
+  "/api/auth/callback/notion",
+  "/api/auth/callback/slack",
+  "/api/flow",
+  "/api/cron/wait",
+])
+
+export default clerkMiddleware(async (auth, req) => {
+  // For ignored routes, return early
+  if (isIgnoredRoute(req)) {
+    return
+  }
+
+  // For non-public routes, check authentication
+  if (!isPublicRoute(req)) {
+    const authObject = await auth()
+
+    // If user is not authenticated, redirect to sign-in
+    if (!authObject.userId) {
+      return authObject.redirectToSignIn({
+        returnBackUrl: req.url,
+      })
+    }
+  }
 })
 
 export const config = {
-  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 }
 
-// https://www.googleapis.com/auth/userinfo.email
-// https://www.googleapis.com/auth/userinfo.profile
-// https://www.googleapis.com/auth/drive.activity.readonly
-// https://www.googleapis.com/auth/drive.metadata
-// https://www.googleapis.com/auth/drive.readonly

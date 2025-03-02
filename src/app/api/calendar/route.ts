@@ -1,4 +1,4 @@
-import { auth, clerkClient } from "@clerk/nextjs"
+import { currentUser } from "@clerk/nextjs/server"
 import { google } from "googleapis"
 import { NextResponse } from "next/server"
 
@@ -10,12 +10,13 @@ const oauth2Client = new google.auth.OAuth2(
 
 export async function GET() {
   try {
-    const { userId } = auth()
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
-    }
+    const user = await currentUser() // ✅ Await the function
 
-    const user = await clerkClient.users.getUser(userId)
+  if (!user) {
+    return { message: 'User not found' }
+  }
+
+  const userId = user.id // ✅ Get user ID properly
     const { googleAccessToken, googleRefreshToken } = user.privateMetadata as {
       googleAccessToken?: string
       googleRefreshToken?: string

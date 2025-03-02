@@ -1,5 +1,7 @@
-import { SignUp } from '@clerk/nextjs'
+"use client"; // Ensure it's a Client Component
 
-export default function Page() {
-  return <SignUp />
+import { SignUp } from "@clerk/nextjs";
+
+export default function SignUpPage() {
+  return <SignUp />;
 }

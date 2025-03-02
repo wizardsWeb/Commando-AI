@@ -1,5 +1,6 @@
 import { google } from 'googleapis'
 import { auth, clerkClient } from '@clerk/nextjs'
+import { currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { db } from '@/lib/db'
@@ -11,10 +12,13 @@ export async function GET() {
     process.env.OAUTH2_REDIRECT_URI
   )
 
-  const { userId } = auth()
-  if (!userId) {
-    return NextResponse.json({ message: 'User not found' })
+  const user = await currentUser() // ✅ Await the function
+
+  if (!user) {
+    return { message: 'User not found' }
   }
+
+  const userId = user.id // ✅ Get user ID properly
 
   const clerkResponse = await clerkClient.users.getUserOauthAccessToken(
     userId,

@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs"
+import { currentUser } from "@clerk/nextjs/server"
 import { OAuth2Client } from "google-auth-library"
 import { NextResponse } from "next/server"
 
@@ -9,10 +9,13 @@ const oauth2Client = new OAuth2Client(
 )
 
 export async function GET() {
-  const { userId } = auth()
-  if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 })
+  const user = await currentUser() // ✅ Await the function
+
+  if (!user) {
+    return { message: 'User not found' }
   }
+
+  const userId = user.id // ✅ Get user ID properly
 
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: "offline",
